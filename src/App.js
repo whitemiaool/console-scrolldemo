@@ -5,6 +5,8 @@ import Scroll,{api} from './scroll'
 import axios from 'axios'
 // import Mlog from 'h5debug'
 import Mlog from './console'
+import { setTimeout } from 'timers';
+import loading from './loading.gif'
 
 
 class App extends Component {
@@ -13,51 +15,61 @@ class App extends Component {
 		this.state = {
 			msglist:[],
 			inputMsgContent:'',
-			wtf:false
+			wtf:false,
+			loadingTop:0,
+			hasRenderLoading:false
 		}
+		this.timmerStack = [];
+		this.topTimes = 0;
+		this.bottomTime = 0;
+		this.touchTopMove = 0;
+		this.lastTouchYvalue = -1;
 	}
 	
-	componentDidMount() {
-		window.addEventListener('keydown', this.handleKeyDown)
-		// console.log('null','undefined',null,undefined)
-		// console.log({a:1,b:'asdad',c:'qweqweqewq',v:{
-		// 	d:'1asdad',
-		// 	l:'asdasdsa',
-		// 	f:{
-		// 		r:'1222222222222312',
-		// 	}
-		// }})
-		console.log([1,2,3,4,5])
-		axios.get('http://client-ds.jd.com/http/api.action?callback=__jp9&route=get_card&ptype=get_component_list&card=39&pin=open_im_44&appId=yhd.customer&venderId=176348&entry=open_m&clientType=m&aid=OzEQl02H&page=1')
-			.then(function (response) {
-		})
 
-		axios.post('http://client-ds.jd.com/http/api.action?callback=__jp9', {
-			firstName: 'Fred',
-			lastName: 'Flintstone'
-		  })
-		  .then(function (response) {
-			// console.log(response);
-		  })
-		setTimeout(()=>{
-			axios.get('http://client-ds.jd.com/http/api.action?callback=__jp9&route=get_card&ptype=get_component_list&card=39&pin=open_im_44&appId=yhd.customer&venderId=176348&entry=open_m&clientType=m&aid=OzEQl02H&page=1')
-			.then(function (response) {
-				// console.log(response);
-			})
-		},10000);
-		// console.log('test','asdasda',[1,23,{a:1}],'opdas','asdasxzc');
-		try {
-			var sendSuccess = 'asd'
-			// console.log(sendSuccess.a.b)
-		} catch (error) {
-			// console.log('catch',error)
-		}
-	}
 	getAnswer() {
 		return Math.random()>0.5?'你真帅！skr,skr,skr':'辛苦你了！！'
 	}
+
+	sto = (ele,px,ms)=>{
+		let cur = ele.scrollHeight;
+		for(let i=0;i<px/((px/ms)*0.16);i++) {
+			setTimeout(()=>{
+				ele.scrollTo(0,i*(px/ms)*0.16)
+			},i*(px/ms)*0.160)
+		}
+	} 
+
+	scrollToPx = (ele,px,ms=1)=>{
+		this.clearAllScrollTimer();
+		let currentScrollHeight= ele.scrollTop;
+		let needScrollPx = px - currentScrollHeight-ele.clientHeight;
+		let scrollTimes = Math.ceil(ms/20);
+		let steps = needScrollPx/scrollTimes;
+		for(let i=1;i<=scrollTimes;i++) {
+			let timmeruuid = this.guid();
+			timmeruuid = setTimeout(()=>{
+				ele.scrollTo(0,currentScrollHeight+i*steps)
+			},i*20)
+			this.timmerStack.push(timmeruuid)
+		}
+
+	}
+	clearAllScrollTimer = ()=>{
+		this.timmerStack.map((t)=>{
+			window.clearTimeout(t)
+		})
+	}
+	guid = ()=> {
+		function S4() {
+		   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+		}
+		return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+	}
 	sendMsgClick = async ()=>{
-		api.stb()
+		setTimeout(()=>{
+			this.scrollToPx(this.as,this.as.scrollHeight,100)
+		},100)
 		let msgc = this.state.inputMsgContent
 		if(msgc == 'debug') {
 			Mlog.hackInstall()
@@ -76,6 +88,99 @@ class App extends Component {
 			inputMsgContent:''
 		})
 	}
+	getScrollAreaData = (ele)=>{
+		return {
+			sTop:ele.scrollTop,
+			cHeight:ele.clientHeight,
+			sHeight:ele.scrollHeight
+		}
+	}
+	handleTouchEnd = ()=> {
+		this.lastTouchYvalue = -1;
+		console.log('end',this.tmer)
+		window.clearTimeout(this.tmer)
+		let {sTop,cHeight,sHeight} = this.getScrollAreaData(this.as);
+		let {hasRenderLoading,loadingTop} = this.state;
+		if(hasRenderLoading&&loadingTop>=40) {
+			this.setState({
+				loadingTop:40,
+			})
+		} else if(hasRenderLoading&&loadingTop<40){
+			this.setState({
+				loadingTop:0,
+				hasRenderLoading:false
+			})
+		}
+		this.tmer = window.setTimeout(()=>{
+			console.log('set')
+			this.setState({
+				loadingTop:0,
+				hasRenderLoading:false
+			})
+		},3000)
+	}
+
+	handleTouchStart = (e)=>{
+		window.clearTimeout(this.tmer)
+		this.touchTopMove = e.targetTouches[0].clientY;
+		if(this.lastTouchYvalue === -1) {
+			this.lastTouchYvalue = e.targetTouches[0].clientY
+		}
+	}
+
+	handleTouchMove = (e)=>{
+		let {sTop,cHeight,sHeight} = this.getScrollAreaData(this.as);
+		let {hasRenderLoading,loadingTop} = this.state;
+
+		if(this.shouldRenderLoading(e)) {
+			// this.touchTopMove = e.targetTouches[0].clientY;
+			this.setState({
+				hasRenderLoading:true
+			})
+		}
+		if(hasRenderLoading&&this.touchUpOrDown(e)) {
+			this.setState({
+				loadingTop:(e.targetTouches[0].clientY-this.touchTopMove)>80?80:(e.targetTouches[0].clientY-this.touchTopMove)
+			})
+		}
+		// if(sTop===0) {
+		// 	this.topTimes++
+		// 	if(hasRenderLoading) {
+		// 		this.setState({
+		// 			loadingTop:(e.targetTouches[0].clientY-this.touchTopMove)>80?80:(e.targetTouches[0].clientY-this.touchTopMove)
+		// 		})
+		// 	}
+		// } else {
+		// 	// this.topTimes++
+		// }
+		// if(sTop===0&&this.topTimes==5&&!hasRenderLoading) {
+		// 	this.topTimes = 0;
+		// 	this.touchTopMove = e.targetTouches[0].clientY;
+		// 	this.setState({
+		// 		hasRenderLoading:true
+		// 	})
+		// 	console.log('wave');
+		// }
+		this.lastTouchYvalue = e.targetTouches[0].clientY
+		console.log(e.targetTouches[0].clientY)
+	}
+	shouldRenderLoading = (e)=>{
+		let {sTop} = this.getScrollAreaData(this.as);
+		let {hasRenderLoading} = this.state;
+		return (sTop===0)&&!hasRenderLoading&&!!this.touchUpOrDown(e)
+	}
+
+	// down:true
+	touchUpOrDown = (e)=>{
+		// this.topTimes++
+		// if(this.topTimes ==5) {
+		// 	this.topTimes = 0
+			// return e.targetTouches[0].clientY-this.lastTouchYvalue>0
+		// }
+		// return false
+
+		return this.touchTopMove - e.targetTouches[0].clientY
+	}
 
 	inputMsgContentChange = (e)=>{
 		let inputMsgContent = e.target.value
@@ -86,7 +191,7 @@ class App extends Component {
 
 	renderMsgList = (arr)=>{
 		return arr.map((item,i)=>{
-			return <div key={i} className="msg-grandpa" className={item.float=='right'?'msg-right msg-grandpa':'msg-left msg-grandpa'}>
+			return <div key={i} id={`msg${i}`} className="msg-grandpa" className={item.float=='right'?'msg-right msg-grandpa':'msg-left msg-grandpa'}>
 					<div className="msg-wrap">
 						<span>{item.content}</span>
 					</div>
@@ -95,14 +200,10 @@ class App extends Component {
 	}
 
 	test = ()=>{
-		var sendSuccess = 'asd'
-		new Promise(()=>{
-			sendSuccess.a.x.c.x.f
-		}).catch(()=>{})
+		document.querySelector('#msg15').scrollIntoView(false)
 	}
 
 	handleKeyDown = (e)=>{
-		// console.log(e.keyCode)
 		if(e.keyCode === 13) {
 			this.sendMsgClick()
 		}
@@ -115,12 +216,16 @@ class App extends Component {
 			default:break
 		}
 	}
+
+	componentDidMount() {
+		window.addEventListener('keydown', this.handleKeyDown)
+	}
 	render() {
-		let {msglist,inputMsgContent,wtf} = this.state
-		if(wtf == 'true') {
-			let a = '1';
-			console.log(a.lik.length)
-		}
+		let {msglist,inputMsgContent,wtf,loadingTop,hasRenderLoading,showLoading} = this.state;
+		let contentStyle = {
+			transform : `translateY(${loadingTop||0}px)`,
+			transition:`all 0.5s`
+		};
 		return (
 			<div onKeyDown={this.handleKeyDown} className="App">
 				<div onClick={this.test} className="header">开放平台DEMO</div>
@@ -128,9 +233,23 @@ class App extends Component {
 					<button onClick={this.therror.bind(null,1)}>抛出异常</button>
 					<button onClick={this.therror.bind(null,2)}>挂掉页面</button>
 				</div>
-				<Scroll className="tx">
-					{this.renderMsgList(msglist)}
-				</Scroll>
+				<div >
+					{/* <Scroll showBar={true} className="tx">
+						<div className="as" ref= {(ref) => {this.as = ref}}></div>
+					</Scroll> */}
+					<div 
+					onTouchMove={this.handleTouchMove}
+					onScroll={this.clearAllScrollTimer} 
+					className="wrap" 
+					onTouchEnd= {this.handleTouchEnd}
+					onTouchStart={this.handleTouchStart}
+					ref= {(ref) => {this.as = ref}}>
+					<div style={contentStyle}>
+						{<div style={{marginTop:'-40px'}}><img style={{height:'40px'}} src={loading} alt=""/></div>}
+						{this.renderMsgList(msglist)}
+					</div>
+					</div>
+				</div>
 				<div className="footer">
 					<input value={inputMsgContent} onChange={this.inputMsgContentChange} type="text"/>
 					<button onClick={this.sendMsgClick}>发送</button>

@@ -126,18 +126,20 @@ class Content extends Component {
 
 	touchStart = (e)=>{
 		this.eventStop(e);		
-		this.setState({
-			touchPos:e.targetTouches[0].clientY,
-			touchContentTop:this.state.contenTop,
-			barFade:false
-		})
+		this.touchPos = e.targetTouches[0].clientY;
+		this.touchContentTop = this.state.contenTop;
+		// this.setState({
+		// 	touchPos:e.targetTouches[0].clientY,
+		// 	touchContentTop:this.state.contenTop,
+		// 	barFade:false
+		// })
 	}
 
 	touchMove = (e)=>{
 		this.eventStop(e);
 		let {touchPos,touchContentTop,sH,cH,barRatio,barHeight} = this.state;
-		let move = (e.targetTouches[0].clientY - touchPos)*1.5;
-		let contenTop = (touchContentTop - move);
+		let move = (e.targetTouches[0].clientY - this.touchPos)*1.5;
+		let contenTop = (this.touchContentTop - move);
 		let barTop = contenTop / barRatio;
 		if(contenTop <= 0) {
 			contenTop = 0;
@@ -154,11 +156,11 @@ class Content extends Component {
 
 	touchEnd = (e)=>{
 		this.eventStop(e);		
-		setTimeout(() => {
-			this.setState({
-				barFade: true
-			})
-		}, 1000)
+		// setTimeout(() => {
+		// 	this.setState({
+		// 		barFade: true
+		// 	})
+		// }, 1000)
 
 	}
 
