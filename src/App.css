@@ -31,11 +31,6 @@ body {
   background: -webkit-linear-gradient(right,red,blue);
   
 }
-.wrap {
-  width: 100%;
-  height: calc(100vh - 89px);
-  overflow-y: auto;
-}
 
 .App-intro {
   font-size: large;
@@ -58,8 +53,7 @@ body {
   background: #fff;
   text-align: center;
   line-height: 40px;
-  /* position: fixed; */
-  /* z-index: 999; */
+  color: #0112fb;
 }
 
 .footer {
@@ -111,9 +105,8 @@ button {
 .msg-grandpa {
   background: #eee ;
   display:flex;
-  margin: 10px  0px;
+  margin: 0px  10px 10px 10px;
   justify-content: end;
-  margin-right: 20px;
   border:none ;
   height: auto ;                  
 }
@@ -123,7 +116,7 @@ button {
 }
 
 .msg-left {
-  margin-left: 20px;
+  /* margin-left: 20px; */
 }
 .msg-left .msg-wrap {
   border-radius: 5px 20px 10px;

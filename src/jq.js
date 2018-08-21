@@ -10321,11 +10321,11 @@ jQuery.isNumeric = function( obj ) {
 // AMD loader is present. jQuery is a special case. For more information, see
 // https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
 
-if ( typeof define === "function" && define.amd ) {
-	define( "jquery", [], function() {
-		return jQuery;
-	} );
-}
+// if ( typeof define === "function" && define.amd ) {
+// 	define( "jquery", [], function() {
+// 		return jQuery;
+// 	} );
+// }
 
 
 
