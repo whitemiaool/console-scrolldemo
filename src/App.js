@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import './App.css';
 import Scroll,{api} from './sc'
 import Mlog from './console'
-import jsonp from './jsnp'
+// import jsonp from './jsnp'
 import axios from 'axios'
+// import $ from './jq'
 
 
 class App extends Component {
@@ -34,22 +35,8 @@ class App extends Component {
 		return Math.random()>0.5?'你真帅！skr,skr,skr':'辛苦你了！！'
 	}
 
-	cors = (url, params)=> {
-        return new Promise((resolve) => {
-            jsonp(url, params, (error, response) => {
-                if(error) {
-                    resolve({
-                        code: -1,
-                    });
-                    return;
-                }
-                resolve(response);
-            })
-        })
-    }
-
 	sendMsgClick = async ()=>{
-
+		this.input.focus();
 		let msgc = this.state.inputMsgContent
 		if(msgc == 'debug') {
 			Mlog.hackInstall()
@@ -62,14 +49,14 @@ class App extends Component {
 		
 		
 		msglist.push(oneSendMsg);
-		axios.get(`https://www.bing.com/socialagent/chat?q=${msgc}&anid=123456`).then((res)=>{
-			let answerMsg = {content:decodeURI(res.data.InstantMessage.ReplyText),float:'left'}
+
+		axios.post('https://dyxuan.top/api/xiaobing',{q:msgc}).then((res)=>{
+			let answerMsg = {content:decodeURI(res.data.data.InstantMessage.ReplyText),float:'left'}
 			msglist.push(answerMsg)
 			this.setState({
 				msglist,
 			})
 			api.scrollToBottom()
-
 		})
 		this.setState({
 			msglist,
@@ -118,13 +105,20 @@ class App extends Component {
             return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
         }
         return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
-    }
+	}
+	handleFocus = ()=>{
+		setTimeout(()=>{
+			// api.scrollToBottom()
+			// api.scrollToTop(2000)
+			api.isBottom()
+		},300)
+	}
 	loadcb = () =>{
 		setTimeout(()=>{
 			let msglist = this.state.msglist;
 			let i = 10
 			while(i--) {
-				msglist.unshift({content:'test msg'+Math.random(),float:'left',id:this.guid()})
+				msglist.unshift({content:'小罗号笛笛吹，海鸥听了瞎几把飞~~'+Math.random(),float:'left',id:this.guid()})
 			}
 			this.setState({
 				msglist,
@@ -136,14 +130,14 @@ class App extends Component {
 		let {msglist,inputMsgContent} = this.state;
 		return (
 			<div onKeyDown={this.handleKeyDown} className="App">
-				<div onClick={this.test} className="header">智能小冰为你服务</div>
-				<div >
+				<div onClick={this.test} className="header">安拉胡阿克巴</div>
+				<div className="s-s-wrap">
 					<Scroll loadcb={this.loadcb} showBar={true} className="tx">
 						{this.renderMsgList(msglist)}
 					</Scroll>
 				</div>
 				<div className="footer">
-					<input value={inputMsgContent} onChange={this.inputMsgContentChange} type="text"/>
+					<input ref={(ref) => { this.input = ref }} value={inputMsgContent} onFocus={this.handleFocus} onChange={this.inputMsgContentChange} type="text"/>
 					<button onClick={this.sendMsgClick}>发送</button>
 				</div>
 			</div>

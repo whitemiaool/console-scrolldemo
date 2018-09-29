@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './os.css';
 import loading from './loading.gif'
 
-let api = {};
+let scrollApi = {};
 class App extends Component {
     constructor() {
         super();
@@ -26,7 +26,7 @@ class App extends Component {
         this.preTop = 0;
 
         // loading height(px)
-        this.LOADING_HEIGHT = 35;
+        this.LOADING_HEIGHT = 50;
     }
     scrollToPx = (ele, px, ms = 1) => {
         this.clearAllScrollTimer();
@@ -38,15 +38,30 @@ class App extends Component {
         for (let i = 1; i <= scrollTimes; i++) {
             let timmeruuid = this.guid();
             timmeruuid = setTimeout(() => {
-                console.log('ssss')
                 ele.scrollTo(0, currentScrollHeight + i * steps)
             }, i * 20)
             this.scrollTimmerStack.push(timmeruuid)
         }
     }
+    isTop = ()=> {
+        let { sTop } = this.getScrollAreaData(this.scrollWrap);
+        return sTop === 0;
+    }
+    isBottom = ()=>{
+        let {sTop,cHeight,sHeight} = this.getScrollAreaData(this.scrollWrap);
+        return (sTop+cHeight+1)>=sHeight
+    }
+    scrollToTop = (ms)=>{
+        setTimeout(()=>{
+            this.scrollToPx(this.scrollWrap,-this.scrollWrap.scrollHeight,ms)
+        },20)
+    }
     scrollToBottom =(ms=100)=>{
         setTimeout(()=>{
-            this.scrollToPx(this.scrollWrap,this.scrollWrap.scrollHeight,ms)
+            this.scrollToPx(this.scrollWrap,this.scrollWrap.scrollHeight,ms);
+            if(this.props.onScrollBottom) {
+                this.props.onScrollBottom();
+            }
         },20)
     }
     clearAllScrollTimer = () => {
@@ -73,7 +88,8 @@ class App extends Component {
         window.clearTimeout(this.hideLoadingTimer)
         let {loadingTop } = this.state;
         if (this.onRenderLoading && loadingTop >= this.LOADING_HEIGHT) {
-            !this.hasRenderLoading&&this.props.loadcb&&this.props.loadcb()
+            !this.hasRenderLoading&&this.props.loadcb&&this.props.loadcb();
+            !this.hasRenderLoading&&this.props.onRefresh && this.props.onRefresh();
             this.setState({
                 loadingTop: this.LOADING_HEIGHT,
             })
@@ -151,7 +167,12 @@ class App extends Component {
 
     }
     componentDidMount() {
-        api.scrollToBottom = this.scrollToBottom
+        scrollApi.scrollToTop    = this.scrollToTop;
+        scrollApi.scrollOffset   = this.scrollToPx;
+        scrollApi.isBottom       = this.isBottom;
+        scrollApi.isTop          = this.isTop;
+        scrollApi.hideLoading    = this.hideLoading;
+        scrollApi.scrollToBottom = this.scrollToBottom
     }
     render() {
         let { loadingTop,transition} = this.state;
@@ -176,4 +197,4 @@ class App extends Component {
     }
 }
 
-export {App as default,api};
+export {App as default,scrollApi};
